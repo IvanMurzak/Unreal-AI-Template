@@ -67,19 +67,41 @@ jobs:
           $ErrorActionPreference = 'Stop'
           if ([string]::IsNullOrWhiteSpace($env:HOST_UPROJECT)) { throw "UNREAL_HOST_PROJECT not set." }
           $projectDir = Split-Path -Parent $env:HOST_UPROJECT
-          # Install from the local checkout (--source) so the PR's exact source is exercised
-          # without a published GitHub Release. (install-extension is the T1 capability being
-          # built in parallel; --source is its offline/CI escape hatch — mirrors godot-cli.)
-          npx --yes unreal-mcp-cli install-extension --path "$projectDir" --source "$env:GITHUB_WORKSPACE"
+          # install-extension's real signature is `install-extension <id> [path] --source <dir>`:
+          # <id> is a REQUIRED positional, the project path is POSITIONAL (there is no --path).
+          # Resolve <id> from extension.json and the plugin source dir (the dir holding the .uplugin).
+          $extId = (Get-Content (Join-Path $env:GITHUB_WORKSPACE 'extension.json') -Raw | ConvertFrom-Json).extensionId
+          $uplugin = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter '*.uplugin' |
+            Where-Object { $_.FullName -notmatch '[\\/](Binaries|Intermediate|Saved)[\\/]' } | Select-Object -First 1
+          $pluginDir = $uplugin.Directory.FullName
+          # Install from the local checkout (--source) so the PR's exact source is exercised without a
+          # published GitHub Release (--source is the offline/CI escape hatch; mirrors godot-cli). --build
+          # compiles the extension into the host editor target now via UBT (Windows runner).
+          npx --yes unreal-mcp-cli install-extension "$extId" "$projectDir" --source "$pluginDir" --build
           if ($LASTEXITCODE -ne 0) { throw "install-extension failed ($LASTEXITCODE)" }
 
-      - name: Boot headless editor + run E2E tool checks
+      - name: Boot the host editor wired to the local MCP server (background)
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $projectDir = Split-Path -Parent $env:HOST_UPROJECT
-          $editorCmd = Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
-          # Bring the local MCP server + bridge + headless editor up in Custom mode, then run the
-          # per-tool checks against it. wait-for-ready blocks until tools/list is answerable.
-          npx --yes unreal-mcp-cli wait-for-ready --path "$projectDir" --timeout 240000
-          ./Tests/e2e/Run-ToolChecks.ps1 -ProjectDir "$projectDir" -Cli "npx --yes unreal-mcp-cli"
+          # Launch the editor wired to a local MCP server in Custom mode (the supported "editor + bridge
+          # + local server" bring-up). `open` spawns the editor and returns; wait-for-ready then blocks
+          # until tools/list is answerable. The host .uproject (UNREAL_HOST_PROJECT) must already have the
+          # UnrealMCP core plugin installed (its bridge built / server pinned) — set up once per runner.
+          Start-Process -FilePath "npx" -ArgumentList @(
+            '--yes','unreal-mcp-cli','open',"$projectDir",'--start-server','--connection-mode','Custom'
+          ) -NoNewWindow
+          npx --yes unreal-mcp-cli wait-for-ready --path "$projectDir" --timeout 300000
+          if ($LASTEXITCODE -ne 0) { throw "MCP server not ready ($LASTEXITCODE)" }
+
+      - name: Run E2E tool checks against the live server
+        shell: pwsh
+        run: ./Tests/e2e/Run-ToolChecks.ps1 -ProjectDir (Split-Path -Parent $env:HOST_UPROJECT) -Cli "npx --yes unreal-mcp-cli"
+
+      - name: Stop the editor / MCP server
+        if: always()
+        shell: pwsh
+        run: |
+          npx --yes unreal-mcp-cli close (Split-Path -Parent $env:HOST_UPROJECT) 2>$null
+          exit 0

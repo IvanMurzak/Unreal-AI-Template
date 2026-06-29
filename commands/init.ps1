@@ -132,6 +132,15 @@ foreach ($Item in $Items) {
     }
 }
 
+# 2b) Rename the sample E2E check file to match the sample tool id (its name is the literal
+#     "hello-extension", not a placeholder, so the content pass above did not touch the filename).
+$SampleE2E = Join-Path $RepoRoot 'Tests/e2e/tools/hello-extension.e2e.ps1'
+if ((Test-Path $SampleE2E) -and ($ToolId -ne 'hello-extension')) {
+    $NewE2E = Join-Path $RepoRoot "Tests/e2e/tools/$ToolId.e2e.ps1"
+    Rename-Item -Path $SampleE2E -NewName "$ToolId.e2e.ps1"
+    Write-Host "  Renamed: hello-extension.e2e.ps1 -> $ToolId.e2e.ps1" -ForegroundColor Gray
+}
+
 # 3) Wire the gating engine plugin (optional).
 $uplugin = Get-ChildItem -Path $RepoRoot -Recurse -Filter '*.uplugin' |
     Where-Object { -not (Test-Ignored $_.FullName) } | Select-Object -First 1
@@ -169,6 +178,16 @@ if (-not [string]::IsNullOrWhiteSpace($FeaturePlugin) -and $uplugin) {
         $b = $b.Replace("// `"${FeaturePlugin}Editor`",", "`"${FeaturePlugin}Editor`",")
         Set-Content -Path $buildCs.FullName -Value $b -NoNewline
         Write-Host "  Uncommented feature-module deps in $($buildCs.Name)" -ForegroundColor Gray
+    }
+
+    # Record the gating engine plugin in extension.json's "enginePlugins" (the catalog hint the
+    # install-extension resolver enables in the .uproject alongside this extension).
+    $extJson = Join-Path $RepoRoot 'extension.json'
+    if (Test-Path $extJson) {
+        $j = Get-Content $extJson -Raw
+        $j = [regex]::Replace($j, '("enginePlugins":\s*)\[\s*\]', "`${1}[`"$FeaturePlugin`"]")
+        Set-Content -Path $extJson -Value $j -NoNewline
+        Write-Host "  Set extension.json enginePlugins -> [`"$FeaturePlugin`"]" -ForegroundColor Gray
     }
 }
 

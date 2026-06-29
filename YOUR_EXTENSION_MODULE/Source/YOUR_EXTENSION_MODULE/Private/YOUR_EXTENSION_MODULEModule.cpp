@@ -32,7 +32,7 @@ public:
 		// Declare each tool with the fluent builder. Tool ids MUST be kebab-case
 		// (^[a-z0-9]+(-[a-z0-9]+)*$). The handler runs ON the game thread (the dispatcher
 		// guarantees it), so you may call editor / engine APIs directly. Return
-		// FUnrealMcpToolResult::Success(text, structuredJson) or ::Failure(message).
+		// FUnrealMcpToolResult::Success(text, structuredJson) or ::Error(message).
 		//
 		// One sample tool ("YOUR_TOOL_ID") ships so the extension is end-to-end functional
 		// out of the box. Replace it with your feature's real tools.

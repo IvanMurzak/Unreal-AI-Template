@@ -10,7 +10,7 @@ release, and a manual bump workflow.
 | --- | --- | --- |
 | `test_unreal_plugin.yml` | `workflow_call` / dispatch | Build the plugin via UBT against the host project + run UE Automation specs for ONE UE version; parse the exported `index.json` (authoritative, not the editor exit code). |
 | `test_pull_request.yml` | PR | Calls the reusable test per UE version (matrix **5.6 / 5.7**) + an **E2E** job: `unreal-mcp-cli install-extension` → headless boot → `run-tool` per tool (`Tests/e2e`). |
-| `release.yml` | push to `main` | **Version-gated** on the `.uplugin` `VersionName` bump + tag-not-exists → full tests → `BuildPlugin` per UE version → **atomic** GitHub Release with the plugin zips. |
+| `release.yml` | push to `main` | **Version-gated** on the `.uplugin` `VersionName` bump + tag (`v<version>`)-not-exists → full tests → package the **source zip** `<Module>-<version>.zip` → **atomic** GitHub Release. |
 | `bump_version.yml` | manual | Runs `commands/bump-version.ps1`, pushes `release/<v>`, opens a PR. |
 
 ## Self-hosted runner gating (never red-by-absence)
@@ -30,9 +30,12 @@ fork PR's checked-out code must not execute on your machine.
 
 ## The multi-UE-version matrix
 
-`5.6 / 5.7` is the analog of Unity's multi-version test matrix. It both validates the extension on
-each supported engine and ties directly to the **compile-on-install** per-version decision (the
-release packages a `BuildPlugin` zip per UE version, which the installer picks from).
+`5.6 / 5.7` is the analog of Unity's multi-version test matrix — it validates the extension on each
+supported engine (the `test_unreal_plugin.yml` legs). The **release ships ONE source zip** (not a
+per-UE binary): the extension ships as source and UE compiles it on the consumer's editor open, so a
+single source asset serves every UE version (the compile-on-install decision, design note §5).
+A `BuildPlugin -Rocket` per-UE binary would require `UnrealMCP` engine-installed on the runner — see
+`release.md`.
 
 ## E2E = a cross-dependency on the install layer
 

@@ -9,9 +9,21 @@
 # A normal merge that does not change the version publishes nothing.
 #
 # ATOMIC: the GitHub Release + tag are created in a SINGLE softprops/action-gh-release
-# call that carries every per-UE-version plugin zip, and is gated on EVERY test + build
-# job — so a failed test or a stranded asset can never produce a partial release. The
-# zips are exactly what `unreal-mcp-cli install-extension` downloads.
+# call, gated on EVERY test job — a failed test can never produce a partial release.
+#
+# WHAT THE RELEASE CARRIES — a SINGLE SOURCE zip `<Module>-<version>.zip` (the plugin
+# source folder with `<Module>/<Module>.uplugin` at the archive root), published at tag
+# `v<version>`. This is EXACTLY what `unreal-mcp-cli install-extension` downloads:
+#   https://github.com/<owner>/<repo>/releases/download/v<version>/<Module>-<version>.zip
+# (the CLI's extensionDownloadUrl / extensionAssetName; the `v` only appears in the tag).
+# The extension ships as SOURCE and UE compiles it on the next editor open — the source
+# model from the design note §5. We deliberately do NOT `BuildPlugin -Rocket` here: an
+# extension depends on the UnrealMCP plugin, and standalone BuildPlugin builds in an
+# isolated HostProject that cannot resolve UnrealMCP unless it is installed into
+# `UE_ROOT\Engine\Plugins\Marketplace` — so a precompiled per-UE asset would require
+# every runner to engine-install UnrealMCP first. The packaging job therefore needs no
+# UE and no self-hosted runner. (If you DO want precompiled binaries, add a BuildPlugin
+# job that first installs UnrealMCP into the engine, and append its zip here.)
 name: release
 
 on:
@@ -27,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get_version.outputs.version }}
+      tag: ${{ steps.get_version.outputs.tag }}
       prev_tag: ${{ steps.prev_tag.outputs.tag }}
       tag_exists: ${{ steps.tag_exists.outputs.exists }}
     steps:
@@ -44,7 +57,9 @@ jobs:
           uplugin=$(find . -name '*.uplugin' -not -path '*/Binaries/*' -not -path '*/Intermediate/*' | head -n1)
           version=$(grep -oE '"VersionName"\s*:\s*"[^"]+"' "$uplugin" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+([-.A-Za-z0-9]+)?' | head -n1)
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Resolved version: $version (from $uplugin)"
+          # The release TAG is `v<version>` — the form the install-extension resolver downloads from.
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $version (tag v$version) (from $uplugin)"
 
       - name: Find previous version tag
         id: prev_tag
@@ -55,7 +70,7 @@ jobs:
         id: tag_exists
         uses: mukunku/tag-exists-action@v1.7.0
         with:
-          tag: ${{ steps.get_version.outputs.version }}
+          tag: ${{ steps.get_version.outputs.tag }}
 
   prepare-release-notes:
     runs-on: ubuntu-latest
@@ -74,18 +89,21 @@ jobs:
         run: |
           set -e
           version=${{ needs.check-version-tag.outputs.version }}
+          tag=${{ needs.check-version-tag.outputs.tag }}
           prev_tag=${{ needs.check-version-tag.outputs.prev_tag }}
           repo_url="https://github.com/${GITHUB_REPOSITORY}"
           today=$(date +'%B %e, %Y')
-          echo "# $version" > release.md
-          echo "**Released:** *$today*" >> release.md
-          echo "" >> release.md
-          echo "---" >> release.md
-          echo "" >> release.md
-          if [ -n "$prev_tag" ]; then
-            echo "## Comparison" >> release.md
-            echo "See every change: [Compare $prev_tag...$version]($repo_url/compare/$prev_tag...$version)" >> release.md
-          fi
+          {
+            echo "# $version"
+            echo "**Released:** *$today*"
+            echo ""
+            echo "---"
+            echo ""
+            if [ -n "$prev_tag" ]; then
+              echo "## Comparison"
+              echo "See every change: [Compare $prev_tag...$tag]($repo_url/compare/$prev_tag...$tag)"
+            fi
+          } > release.md
 
       - name: Upload release notes artifact
         uses: actions/upload-artifact@v4
@@ -109,56 +127,46 @@ jobs:
     with:
       ue: "5.7"
 
-  # BuildPlugin per UE version -> zip the packaged plugin that install-extension downloads.
-  build:
+  # Package the plugin SOURCE into the single `<Module>-<version>.zip` install-extension
+  # downloads. `git archive` includes only tracked files, so build artifacts
+  # (Binaries/Intermediate/Saved) are excluded by construction. No UE / no runner needed.
+  package:
     needs: [check-version-tag]
     if: needs.check-version-tag.outputs.tag_exists == 'false'
-    runs-on: [self-hosted, windows, unreal]
-    strategy:
-      fail-fast: false
-      matrix:
-        ue: ["5.6", "5.7"]
-    env:
-      UE_ROOT: C:\Program Files\Epic Games\UE_${{ matrix.ue }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: BuildPlugin + zip
+      - name: Build source zip (plugin folder at the archive root)
         id: pkg
-        shell: pwsh
+        shell: bash
         run: |
-          $ErrorActionPreference = 'Stop'
-          $uplugin = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter '*.uplugin' |
-            Where-Object { $_.FullName -notmatch '[\\/](Binaries|Intermediate|Saved)[\\/]' } | Select-Object -First 1
-          $module = [System.IO.Path]::GetFileNameWithoutExtension($uplugin.Name)
-          $runUAT = Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
-          $package = Join-Path $env:RUNNER_TEMP "pkg-$module-ue${{ matrix.ue }}"
-          if (Test-Path $package) { Remove-Item $package -Recurse -Force }
-          & $runUAT BuildPlugin -Plugin="$($uplugin.FullName)" -Package="$package" -TargetPlatforms=Win64 -Rocket
-          if ($LASTEXITCODE -ne 0) { throw "BuildPlugin failed ($LASTEXITCODE)" }
-          $zip = Join-Path $env:GITHUB_WORKSPACE "$module-ue${{ matrix.ue }}.zip"
-          if (Test-Path $zip) { Remove-Item $zip -Force }
-          # Zip the package with the plugin folder as the archive root (install-extension expects
-          # <Module>/<Module>.uplugin at the zip root).
-          Compress-Archive -Path (Join-Path $package '*') -DestinationPath $zip
-          echo "zip=$zip" >> $env:GITHUB_OUTPUT
-          echo "module=$module" >> $env:GITHUB_OUTPUT
+          set -e
+          version=${{ needs.check-version-tag.outputs.version }}
+          uplugin=$(find . -name '*.uplugin' -not -path '*/Binaries/*' -not -path '*/Intermediate/*' | head -n1)
+          plugin_dir=$(dirname "$uplugin")               # e.g. ./UnrealAINiagara
+          module=$(basename "$plugin_dir")               # e.g. UnrealAINiagara
+          zip="$module-$version.zip"
+          # Archive the tracked plugin tree with `<module>/...` at the zip root.
+          git archive --format=zip -o "$zip" HEAD "$plugin_dir"
+          echo "zip=$zip" >> "$GITHUB_OUTPUT"
+          echo "Packaged $zip"
 
-      - name: Upload plugin zip artifact
+      - name: Upload plugin source zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: plugin-zip-ue-${{ matrix.ue }}
+          name: plugin-zip
           path: ${{ steps.pkg.outputs.zip }}
 
-  # Atomic publish — gated on EVERY test + build job + the notes. A failed test or build
-  # means no release (mirrors Unity's atomic release-unity-plugin).
+  # Atomic publish — gated on EVERY test + package job + the notes. A failed test means no
+  # release (mirrors Unity's atomic release-unity-plugin).
   release:
     runs-on: ubuntu-latest
     needs:
-      [check-version-tag, prepare-release-notes, test-ue-5-6, test-ue-5-7, build]
+      [check-version-tag, prepare-release-notes, test-ue-5-6, test-ue-5-7, package]
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     steps:
       - name: Download release notes
@@ -167,20 +175,19 @@ jobs:
           name: release-notes
           path: ./release-notes
 
-      - name: Download all plugin zips
+      - name: Download plugin source zip
         uses: actions/download-artifact@v4
         with:
-          pattern: plugin-zip-ue-*
+          name: plugin-zip
           path: ./assets
-          merge-multiple: true
 
       - name: List assembled assets
         run: ls -la ./assets ./release-notes
 
-      - name: Create Tag and Release with all assets
+      - name: Create Tag and Release with the source zip
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.check-version-tag.outputs.version }}
+          tag_name: ${{ needs.check-version-tag.outputs.tag }}
           name: ${{ needs.check-version-tag.outputs.version }}
           body_path: ./release-notes/release.md
           draft: false

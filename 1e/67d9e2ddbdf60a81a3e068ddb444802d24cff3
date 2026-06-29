@@ -1,0 +1,51 @@
+extension.json
+  s_e3cea916442b5e::t_3c10d1a67b4db1 3-6,9-11
+Tests/e2e/Run-ToolChecks.ps1
+  s_e3cea916442b5e::t_4812063d60b89d 9,14-25,58-59,67,69-74,77-84
+.github/workflows/release.yml-sample
+  s_e3cea916442b5e::t_8ad47a8f17d075 12-26,42,60-62,73,92,96-106,130-133,136,143,145,147-158,161,164-165,169,178,181,187,190
+.gitattributes
+  s_e3cea916442b5e::t_e578b3a3257b48 1-12
+docs/claude/release.md
+  s_e3cea916442b5e::t_282fe056348238 20-21
+  s_e3cea916442b5e::t_bc5c6505ab917b 22
+  s_117a0bff4616b4::t_76753c95d61d1a 30-34,38-48,61-62
+commands/init.py
+  s_e3cea916442b5e::t_d8e2dc325528d3 114-121,144-153
+.github/workflows/bump_version.yml
+  s_117a0bff4616b4::t_cb01ef74dd573a 43-45
+.github/workflows/test_pull_request.yml-sample
+  s_117a0bff4616b4::t_508b5a573215d9 70-80,83,88-107
+README.md
+  s_117a0bff4616b4::t_10545c17f4355d 153-156,160-161,164-166,169-172,184
+YOUR_EXTENSION_MODULE/Source/YOUR_EXTENSION_MODULE/Private/YOUR_EXTENSION_MODULEModule.cpp
+  s_117a0bff4616b4::t_47674938b74285 35
+commands/init.ps1
+  s_117a0bff4616b4::t_940e045ed8e13c 135-143,182-191
+docs/claude/ci.md
+  s_117a0bff4616b4::t_9397d0e35aa475 13,33-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "1e67d9e2ddbdf60a81a3e068ddb444802d24cff3",
+  "prompts": {},
+  "sessions": {
+    "s_117a0bff4616b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a4315c662597e0687",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_e3cea916442b5e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c575ab56-73e6-4952-bb8b-fef415924e27",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

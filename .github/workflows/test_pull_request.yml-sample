@@ -1,0 +1,85 @@
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │  Pull-request CI for an Unreal-MCP extension. Activated by commands/init   │
+# │  (renamed from .yml-sample). Mirrors Unity-AI-*'s test_pull_request.yml,    │
+# │  adapted to Unreal. Licensed under the Apache License, Version 2.0.         │
+# └──────────────────────────────────────────────────────────────────────────┘
+#
+# Two gates, both never-red-by-absence (self-hosted UE runner required):
+#   (1) plugin-ue-{5.6,5.7} — UBT build + UE Automation specs per UE version via the
+#       reusable test_unreal_plugin.yml. Gated inside that workflow on UNREAL_RUNNER_READY.
+#   (2) e2e — boot a headless editor, install THIS extension with
+#       `unreal-mcp-cli install-extension`, then invoke every tool with
+#       `unreal-mcp-cli run-tool` (Tests/e2e) and assert a well-formed success.
+#       Gated on UNREAL_E2E_READY.
+#
+# The multi-UE matrix (5.6 / 5.7) is the analog of Unity's multi-version matrix and
+# informs the compile-on-install per-version decision (design note §5).
+name: test-pull-request
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-pr-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plugin-ue-5-6:
+    uses: ./.github/workflows/test_unreal_plugin.yml
+    with:
+      ue: "5.6"
+
+  plugin-ue-5-7:
+    uses: ./.github/workflows/test_unreal_plugin.yml
+    with:
+      ue: "5.7"
+
+  # End-to-end: install this extension via the CLI, then call each tool over the live
+  # local MCP server. Consumes `unreal-mcp-cli install-extension` (the install/T1 layer)
+  # — a deliberate cross-dependency (design note §7). Gated separately so it never reds a
+  # PR by absence until the owner validates it once and sets vars.UNREAL_E2E_READY=true.
+  e2e:
+    name: e2e tool-invocation (UE ${{ matrix.ue }})
+    if: ${{ vars.UNREAL_E2E_READY == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: [self-hosted, windows, unreal]
+    strategy:
+      fail-fast: false
+      matrix:
+        ue: ["5.6", "5.7"]
+    env:
+      UE_ROOT: C:\Program Files\Epic Games\UE_${{ matrix.ue }}
+      HOST_UPROJECT: ${{ vars.UNREAL_HOST_PROJECT }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install this extension into the host project (unreal-mcp-cli install-extension)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:HOST_UPROJECT)) { throw "UNREAL_HOST_PROJECT not set." }
+          $projectDir = Split-Path -Parent $env:HOST_UPROJECT
+          # Install from the local checkout (--source) so the PR's exact source is exercised
+          # without a published GitHub Release. (install-extension is the T1 capability being
+          # built in parallel; --source is its offline/CI escape hatch — mirrors godot-cli.)
+          npx --yes unreal-mcp-cli install-extension --path "$projectDir" --source "$env:GITHUB_WORKSPACE"
+          if ($LASTEXITCODE -ne 0) { throw "install-extension failed ($LASTEXITCODE)" }
+
+      - name: Boot headless editor + run E2E tool checks
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $projectDir = Split-Path -Parent $env:HOST_UPROJECT
+          $editorCmd = Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          # Bring the local MCP server + bridge + headless editor up in Custom mode, then run the
+          # per-tool checks against it. wait-for-ready blocks until tools/list is answerable.
+          npx --yes unreal-mcp-cli wait-for-ready --path "$projectDir" --timeout 240000
+          ./Tests/e2e/Run-ToolChecks.ps1 -ProjectDir "$projectDir" -Cli "npx --yes unreal-mcp-cli"

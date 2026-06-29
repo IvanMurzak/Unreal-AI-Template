@@ -1,0 +1,9 @@
+{
+  "extensionId": "YOUR_EXTENSION_ID",
+  "displayName": "YOUR_EXTENSION_DISPLAY_NAME",
+  "module": "YOUR_EXTENSION_MODULE",
+  "version": "0.1.0",
+  "minCoreVersion": "0.1.0",
+  "repository": "YOUR_GITHUB_USERNAME_REPOSITORY",
+  "_comment": "Install-catalog / compatibility manifest (design note 'Unreal extensions architecture' §3 catalog format + §5 compat contract). 'version' mirrors the .uplugin VersionName (kept in sync by commands/bump-version.ps1). 'minCoreVersion' is the lowest Unreal-MCP core version this extension is known to work with (refreshed by commands/update-core.ps1). The unreal-mcp-cli 'install-extension' resolver reads this to pick a compatible build for the user's installed core + UE version."
+}

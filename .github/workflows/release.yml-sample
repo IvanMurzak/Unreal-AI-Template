@@ -1,0 +1,192 @@
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │  Release CI for an Unreal-MCP extension. Activated by commands/init        │
+# │  (renamed from .yml-sample). Mirrors Unity-AI-*'s atomic, all-tests-gated   │
+# │  release-unity-plugin, adapted to Unreal. Apache License, Version 2.0.      │
+# └──────────────────────────────────────────────────────────────────────────┘
+#
+# VERSION-GATED: publishes ONLY when the .uplugin VersionName has been bumped to a
+# value with no existing git tag (the analog of Unity's package.json + tag gate).
+# A normal merge that does not change the version publishes nothing.
+#
+# ATOMIC: the GitHub Release + tag are created in a SINGLE softprops/action-gh-release
+# call that carries every per-UE-version plugin zip, and is gated on EVERY test + build
+# job — so a failed test or a stranded asset can never produce a partial release. The
+# zips are exactly what `unreal-mcp-cli install-extension` downloads.
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  check-version-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      prev_tag: ${{ steps.prev_tag.outputs.tag }}
+      tag_exists: ${{ steps.tag_exists.outputs.exists }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Read version from .uplugin
+        id: get_version
+        shell: bash
+        run: |
+          set -e
+          uplugin=$(find . -name '*.uplugin' -not -path '*/Binaries/*' -not -path '*/Intermediate/*' | head -n1)
+          version=$(grep -oE '"VersionName"\s*:\s*"[^"]+"' "$uplugin" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+([-.A-Za-z0-9]+)?' | head -n1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $version (from $uplugin)"
+
+      - name: Find previous version tag
+        id: prev_tag
+        uses: WyriHaximus/github-action-get-previous-tag@v2
+        continue-on-error: true
+
+      - name: Check if tag exists
+        id: tag_exists
+        uses: mukunku/tag-exists-action@v1.7.0
+        with:
+          tag: ${{ steps.get_version.outputs.version }}
+
+  prepare-release-notes:
+    runs-on: ubuntu-latest
+    needs: [check-version-tag]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Generate release description
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          version=${{ needs.check-version-tag.outputs.version }}
+          prev_tag=${{ needs.check-version-tag.outputs.prev_tag }}
+          repo_url="https://github.com/${GITHUB_REPOSITORY}"
+          today=$(date +'%B %e, %Y')
+          echo "# $version" > release.md
+          echo "**Released:** *$today*" >> release.md
+          echo "" >> release.md
+          echo "---" >> release.md
+          echo "" >> release.md
+          if [ -n "$prev_tag" ]; then
+            echo "## Comparison" >> release.md
+            echo "See every change: [Compare $prev_tag...$version]($repo_url/compare/$prev_tag...$version)" >> release.md
+          fi
+
+      - name: Upload release notes artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: ./release.md
+
+  # Full test suite per UE version (gated on a fresh version). Same reusable workflow the
+  # PR uses; skipped when no self-hosted runner is registered (UNREAL_RUNNER_READY).
+  test-ue-5-6:
+    needs: [check-version-tag]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    uses: ./.github/workflows/test_unreal_plugin.yml
+    with:
+      ue: "5.6"
+
+  test-ue-5-7:
+    needs: [check-version-tag]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    uses: ./.github/workflows/test_unreal_plugin.yml
+    with:
+      ue: "5.7"
+
+  # BuildPlugin per UE version -> zip the packaged plugin that install-extension downloads.
+  build:
+    needs: [check-version-tag]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    runs-on: [self-hosted, windows, unreal]
+    strategy:
+      fail-fast: false
+      matrix:
+        ue: ["5.6", "5.7"]
+    env:
+      UE_ROOT: C:\Program Files\Epic Games\UE_${{ matrix.ue }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: BuildPlugin + zip
+        id: pkg
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $uplugin = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter '*.uplugin' |
+            Where-Object { $_.FullName -notmatch '[\\/](Binaries|Intermediate|Saved)[\\/]' } | Select-Object -First 1
+          $module = [System.IO.Path]::GetFileNameWithoutExtension($uplugin.Name)
+          $runUAT = Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          $package = Join-Path $env:RUNNER_TEMP "pkg-$module-ue${{ matrix.ue }}"
+          if (Test-Path $package) { Remove-Item $package -Recurse -Force }
+          & $runUAT BuildPlugin -Plugin="$($uplugin.FullName)" -Package="$package" -TargetPlatforms=Win64 -Rocket
+          if ($LASTEXITCODE -ne 0) { throw "BuildPlugin failed ($LASTEXITCODE)" }
+          $zip = Join-Path $env:GITHUB_WORKSPACE "$module-ue${{ matrix.ue }}.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          # Zip the package with the plugin folder as the archive root (install-extension expects
+          # <Module>/<Module>.uplugin at the zip root).
+          Compress-Archive -Path (Join-Path $package '*') -DestinationPath $zip
+          echo "zip=$zip" >> $env:GITHUB_OUTPUT
+          echo "module=$module" >> $env:GITHUB_OUTPUT
+
+      - name: Upload plugin zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip-ue-${{ matrix.ue }}
+          path: ${{ steps.pkg.outputs.zip }}
+
+  # Atomic publish — gated on EVERY test + build job + the notes. A failed test or build
+  # means no release (mirrors Unity's atomic release-unity-plugin).
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      [check-version-tag, prepare-release-notes, test-ue-5-6, test-ue-5-7, build]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    steps:
+      - name: Download release notes
+        uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+          path: ./release-notes
+
+      - name: Download all plugin zips
+        uses: actions/download-artifact@v4
+        with:
+          pattern: plugin-zip-ue-*
+          path: ./assets
+          merge-multiple: true
+
+      - name: List assembled assets
+        run: ls -la ./assets ./release-notes
+
+      - name: Create Tag and Release with all assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.check-version-tag.outputs.version }}
+          name: ${{ needs.check-version-tag.outputs.version }}
+          body_path: ./release-notes/release.md
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            ./assets/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

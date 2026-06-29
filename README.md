@@ -150,22 +150,26 @@ Versioning is single-sourced from the `.uplugin` `VersionName`. Bump it in lock-
 ```
 
 Push to `main`. **`release.yml` is version-gated**: when the `VersionName` is a new value with no
-existing tag, it runs the full test suite, packages the plugin with `BuildPlugin` for each supported
-UE version (5.6 / 5.7), and creates an **atomic GitHub Release** carrying the plugin zip(s) — the
-exact assets the installer downloads. (Track the core version floor with
-`./commands/update-core.ps1`.)
+existing tag, it runs the full test suite, packages the plugin **source** into a single
+`<Module>-<version>.zip`, and creates an **atomic GitHub Release** (tag `v<version>`) carrying that
+zip — the exact asset the installer downloads. The extension ships as source and UE compiles it on
+the consumer's next editor open. (Track the core version floor with `./commands/update-core.ps1`.)
 
 ### 8. Install via the CLI
 
-Once released, anyone installs your extension into a UE project with:
+Once released, anyone installs your extension into a UE project with (the project path is a
+**positional** argument):
 
 ```bash
-unreal-mcp-cli install-extension YourName/Unreal-AI-Niagara --path <UEProject>
+unreal-mcp-cli install-extension <extensionId> <UEProject>
+# offline / from a local checkout (no published release needed):
+unreal-mcp-cli install-extension <extensionId> <UEProject> --source <path-to-plugin-dir>
 ```
 
-The CLI resolves the release zip, places the plugin in `Plugins/<Module>/`, enables it (and its
-gating engine plugin) in the `.uproject`, and recompiles via UBT. The same capability backs the
-AI-Game-Dev desktop app button and the in-editor Extensions panel.
+The CLI resolves the release zip (`releases/download/v<version>/<Module>-<version>.zip`), places the
+plugin in `Plugins/<Module>/`, enables it (and its gating engine plugin) in the `.uproject`, and the
+editor recompiles it on next open (or pass `--build` to compile now via UBT). The same capability
+backs the AI-Game-Dev desktop app button and the in-editor Extensions panel.
 
 ---
 
@@ -177,7 +181,7 @@ CI ships as `*.yml-sample` and is activated by `init`:
 | --- | --- | --- |
 | `test_unreal_plugin.yml` | reusable | UBT build + UE Automation specs for one UE version |
 | `test_pull_request.yml` | PR | the reusable test per UE version (5.6/5.7) + E2E `unreal-mcp-cli` tool checks |
-| `release.yml` | push to `main` | version-gated → full tests → `BuildPlugin` per UE version → atomic GitHub Release |
+| `release.yml` | push to `main` | version-gated → full tests → package source zip `<Module>-<version>.zip` → atomic GitHub Release (tag `v<version>`) |
 | `bump_version.yml` | manual | runs `bump-version.ps1`, opens a release PR |
 
 The plugin/E2E jobs run on a **self-hosted Windows UE runner** and are **never red-by-absence** —

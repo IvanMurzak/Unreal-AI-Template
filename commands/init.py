@@ -111,6 +111,14 @@ def main() -> int:
             os.rename(p, os.path.join(os.path.dirname(p), new_base))
             print(f"  Renamed: {base} -> {new_base}")
 
+    # 2b) Rename the sample E2E check to match the sample tool id (its filename is the literal
+    #     "hello-extension", not a placeholder, so the content pass did not rename it).
+    sample_e2e = os.path.join(REPO_ROOT, "Tests", "e2e", "tools", "hello-extension.e2e.ps1")
+    if os.path.isfile(sample_e2e) and a.tool != "hello-extension":
+        new_e2e = os.path.join(os.path.dirname(sample_e2e), f"{a.tool}.e2e.ps1")
+        os.rename(sample_e2e, new_e2e)
+        print(f"  Renamed: hello-extension.e2e.ps1 -> {a.tool}.e2e.ps1")
+
     # 3) Wire the gating engine plugin (optional).
     if a.feature.strip():
         uplugin = next((f for f in walk_files() if f.endswith(".uplugin")), None)
@@ -133,6 +141,16 @@ def main() -> int:
             with open(build_cs, "w", encoding="utf-8", newline="") as fh:
                 fh.write(b)
             print(f"  Uncommented feature-module deps in {os.path.basename(build_cs)}")
+        # Record the gating engine plugin in extension.json's "enginePlugins" (the catalog hint the
+        # install-extension resolver enables in the .uproject alongside this extension).
+        ext_json = os.path.join(REPO_ROOT, "extension.json")
+        if os.path.isfile(ext_json):
+            with open(ext_json, "r", encoding="utf-8") as fh:
+                j = fh.read()
+            j = re.sub(r'("enginePlugins":\s*)\[\s*\]', r'\1["' + a.feature + '"]', j)
+            with open(ext_json, "w", encoding="utf-8", newline="") as fh:
+                fh.write(j)
+            print(f'  Set extension.json enginePlugins -> ["{a.feature}"]')
 
     # 4) Activate workflows.
     wf_dir = os.path.join(REPO_ROOT, ".github", "workflows")

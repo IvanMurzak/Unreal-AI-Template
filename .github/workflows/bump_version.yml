@@ -40,7 +40,9 @@ jobs:
 
       - name: Commit and push version bump
         run: |
-          git add -A
+          # Scoped add — only the files bump-version.ps1 rewrites (never `git add -A`, which would
+          # also stage any stray build artifact a local run left behind).
+          git add '*.uplugin' '*Module.cpp' extension.json
           git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
           git push origin release/${{ github.event.inputs.version }}
 

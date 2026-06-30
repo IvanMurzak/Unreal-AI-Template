@@ -5,14 +5,14 @@
 # └──────────────────────────────────────────────────────────────────────────┘
 #
 # Two gates, both never-red-by-absence (self-hosted UE runner required):
-#   (1) plugin-ue-{5.6,5.7} — UBT build + UE Automation specs per UE version via the
+#   (1) plugin-ue-{5.7,5.8} — UBT build + UE Automation specs per UE version via the
 #       reusable test_unreal_plugin.yml. Gated inside that workflow on UNREAL_RUNNER_READY.
 #   (2) e2e — boot a headless editor, install THIS extension with
 #       `unreal-mcp-cli install-extension`, then invoke every tool with
 #       `unreal-mcp-cli run-tool` (Tests/e2e) and assert a well-formed success.
 #       Gated on UNREAL_E2E_READY.
 #
-# The multi-UE matrix (5.6 / 5.7) is the analog of Unity's multi-version matrix and
+# The multi-UE matrix (5.7 / 5.8) is the analog of Unity's multi-version matrix and
 # informs the compile-on-install per-version decision (design note §5).
 name: test-pull-request
 
@@ -30,15 +30,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  plugin-ue-5-6:
-    uses: ./.github/workflows/test_unreal_plugin.yml
-    with:
-      ue: "5.6"
-
   plugin-ue-5-7:
     uses: ./.github/workflows/test_unreal_plugin.yml
     with:
       ue: "5.7"
+
+  plugin-ue-5-8:
+    uses: ./.github/workflows/test_unreal_plugin.yml
+    with:
+      ue: "5.8"
 
   # End-to-end: install this extension via the CLI, then call each tool over the live
   # local MCP server. Consumes `unreal-mcp-cli install-extension` (the install/T1 layer)
@@ -51,7 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ue: ["5.6", "5.7"]
+        ue: ["5.7", "5.8"]
     env:
       UE_ROOT: C:\Program Files\Epic Games\UE_${{ matrix.ue }}
       HOST_UPROJECT: ${{ vars.UNREAL_HOST_PROJECT }}

@@ -32,7 +32,7 @@ permissions:
 
 jobs:
   build-and-test:
-    name: UE ${{ inputs.ue }} BuildPlugin + Automation
+    name: UE ${{ inputs.ue }} host build + Automation
     # Gated on the runner being registered AND (for PRs) the PR originating from THIS
     # repo, never a fork (a fork PR must never run its checked-out code on a self-hosted
     # runner). Manual dispatches are trusted and unaffected by the fork clause.
@@ -60,21 +60,13 @@ jobs:
           echo "module=$module" >> $env:GITHUB_OUTPUT
           echo "Resolved plugin '$module' at $($uplugin.Directory.FullName)"
 
-      - name: BuildPlugin (marketplace packaging validation, per UE version)
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $runUAT = Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
-          if (-not (Test-Path $runUAT)) { throw "RunUAT.bat not found at $runUAT (is UE ${{ inputs.ue }} installed?)" }
-          $uplugin = Join-Path '${{ steps.meta.outputs.plugin_dir }}' '${{ steps.meta.outputs.module }}.uplugin'
-          $package = Join-Path $env:RUNNER_TEMP 'Ext-Dist-Package'
-          if (Test-Path $package) { Remove-Item $package -Recurse -Force }
-          # NOTE: an extension depends on the UnrealMCP plugin. BuildPlugin resolves plugin
-          # dependencies from the engine's installed plugins; the runner must have UnrealMCP
-          # installed into UE_ROOT\Engine\Plugins\Marketplace (or available via the host project).
-          & $runUAT BuildPlugin -Plugin="$uplugin" -Package="$package" -TargetPlatforms=Win64 -Rocket
-          if ($LASTEXITCODE -ne 0) { throw "BuildPlugin failed with exit code $LASTEXITCODE" }
-
+      # NOTE: there is deliberately NO standalone `BuildPlugin -Rocket` step. An extension
+      # depends on the UnrealMCP plugin, and standalone BuildPlugin builds in an isolated
+      # HostProject that CANNOT resolve UnrealMCP unless it is engine-installed into
+      # UE_ROOT\Engine\Plugins\Marketplace (see docs/claude/release.md). The per-UE compile
+      # validation is the host-editor-target build below, which resolves UnrealMCP via the
+      # host project (UNREAL_HOST_PROJECT) — matching the documented design (docs/claude/ci.md:
+      # "Build the plugin via UBT against the host project").
       - name: Build host editor target (junction this extension into the host project)
         shell: pwsh
         run: |
@@ -85,7 +77,14 @@ jobs:
           $hostPlugins = Join-Path (Split-Path -Parent $env:HOST_UPROJECT) 'Plugins'
           New-Item -ItemType Directory -Force -Path $hostPlugins | Out-Null
           $link = Join-Path $hostPlugins '${{ steps.meta.outputs.module }}'
-          if (Test-Path $link) { cmd /c rmdir "$link" 2>$null }
+          if (Test-Path $link) {
+            $existing = Get-Item $link -Force
+            if ($existing.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+              cmd /c rmdir "$link"                 # junction: unlink only (never follows into the target)
+            } else {
+              Remove-Item $link -Recurse -Force    # leftover real dir (e.g. from the e2e install) — safe: not a reparse point
+            }
+          }
           # Junction the host's Plugins/<module> -> this checkout's plugin dir so the host editor
           # compiles THIS extension (and its Automation specs) in.
           cmd /c mklink /J "$link" "${{ steps.meta.outputs.plugin_dir }}"

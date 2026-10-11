@@ -16,8 +16,8 @@ extension (what it wraps, its gating plugin, its tool family); it is no longer t
   (`*.Build.cs`, `Private/<Module>Module.cpp` = provider + module, `Private/Tests/` = Automation specs).
 - `Tests/e2e/` — `Run-ToolChecks.ps1` harness + `tools/<tool-id>.e2e.ps1`, one check per tool.
 - `commands/` — `init`, `bump-version`, `get-version`, `update-core` (excluded from `init` substitution).
-- `extension.json` — install-catalog manifest (`version` mirrors the `.uplugin`, `minCoreVersion`, `enginePlugins`, `tools[]`).
-- `.github/workflows/` — `*.yml-sample` become live on `init`; `test_unreal_plugin.yml` + `bump_version.yml` are already live.
+- `extension.json` — install-catalog manifest (`version` mirrors the `.uplugin`; `minCoreVersion`, `enginePlugins`, `tools[]`).
+- `.github/workflows/` — `*.yml-sample` go live on `init` (`test_unreal_plugin.yml`, `bump_version.yml` already are).
 - `docs/claude/` — `architecture.md` (extension shape, contract, init flow), `ci.md` (workflows, repo
   variables, self-hosted runner gating), `release.md` (version gate, atomic source-zip release).
 - `README.md` — user walkthrough: scaffold → init → build → register → release → install.
@@ -38,7 +38,7 @@ extension (what it wraps, its gating plugin, its tool family); it is no longer t
 # Scaffold a new extension from the template
 ./commands/init.ps1 -ExtensionModule "UnrealAINiagara" -ExtensionId "com.company.unreal-ai-niagara" `
   -DisplayName "Unreal AI Niagara" -GitHubRepository "Owner/Unreal-AI-Niagara" -FeaturePlugin "Niagara"
-# (parity: python commands/init.py --module ... --id ... --name ... --repo ... --feature ...)
+# parity: python commands/init.py --module ... --id ... --name ... --repo ... --feature ...
 
 ./commands/bump-version.ps1 -NewVersion "<x.y.z>"  # .uplugin VersionName + GetExtensionVersion() + extension.json
 ./commands/get-version.ps1                         # prints the .uplugin VersionName

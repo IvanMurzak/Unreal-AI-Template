@@ -1,0 +1,23 @@
+.github/workflows/test_unreal_plugin.yml
+  s_863d90f60ee5b0::t_ad4f525718c8ce 66,68
+AGENTS.md
+  s_863d90f60ee5b0::t_fde2c73d6b44a2 21
+README.md
+  s_863d90f60ee5b0::t_60f2eefd6ce278 194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "586f959b5f87b20fd552aaa97a9b8d7096151cc9",
+  "prompts": {},
+  "sessions": {
+    "s_863d90f60ee5b0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_863d90f60ee5b0",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

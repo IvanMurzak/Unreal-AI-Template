@@ -18,7 +18,7 @@ extension (what it wraps, its gating plugin, its tool family); it is no longer t
 - `commands/` — `init`, `bump-version`, `get-version`, `update-core` (excluded from `init` substitution).
 - `extension.json` — install-catalog manifest (`version` mirrors the `.uplugin`; `minCoreVersion`, `enginePlugins`, `tools[]`).
 - `.github/workflows/` — `*.yml-sample` go live on `init` (`test_unreal_plugin.yml`, `bump_version.yml` already are).
-- `docs/claude/` — `architecture.md` (extension shape, contract, init flow), `ci.md` (workflows, repo
+- `docs/agents/` — `architecture.md` (extension shape, contract, init flow), `ci.md` (workflows, repo
   variables, self-hosted runner gating), `release.md` (version gate, atomic source-zip release).
 - `README.md` — user walkthrough: scaffold → init → build → register → release → install.
 

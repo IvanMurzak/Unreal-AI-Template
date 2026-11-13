@@ -24,7 +24,8 @@ def code_card():
     ]
     out = [f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="14" fill="url(#card)" stroke="{K.HAIR}"/>',
            f'<rect x="{x}" y="{y + 12}" width="3" height="{h - 24}" rx="1.5" fill="{K.RED_TEXT}"/>',
-           f'<text x="{x + 24}" y="{y + 38}" class="m" font-size="16" fill="{K.MUTED}">&lt;Module&gt;Module.cpp</text>']
+           f'<text x="{x + 24}" y="{y + 38}" class="m" font-size="16" fill="{K.MUTED}">&lt;Module&gt;Module.cpp</text>',
+           K.logo(x + w - 40, y + 34, 40)]
     for i, spans in enumerate(lines):
         t = "".join(f'<tspan fill="{c}">{K.esc(s)}</tspan>' for c, s in spans)
         out.append(f'<text x="{x + 24}" y="{y + 84 + i * 34}" class="m" font-size="17">{t}</text>')

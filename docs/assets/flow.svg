@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-label="From template to installed extension: use the template, run init, add tools, build and test with UBT, release a source zip, install with unreal-mcp-cli. At runtime Unreal-MCP discovers the plugin's tool provider and serves its tools to the AI agent.">
+  <title>From template to installed extension, and how Unreal-MCP serves its tools</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="0.55" stop-color="#111a33"/>
+      <stop offset="1" stop-color="#1a1238"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.5" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#e879f9"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="1200" height="330" rx="20"/></clipPath>
+    <path id="run" d="M115 176 H1085"/>
+    <path id="r1" d="M424 284 H484"/>
+    <path id="r2" d="M744 284 H804"/>
+  </defs>
+  <style>
+    .sans { font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif; }
+    .mono { font-family: "Cascadia Code", Consolas, Menlo, "Liberation Mono", monospace; }
+    .box { fill: #ffffff; fill-opacity: 0.05; stroke: #ffffff; stroke-opacity: 0.14; }
+    .t { fill: #e2e8f0; font-size: 17px; font-weight: 700; }
+    .s { fill: #94a3b8; font-size: 12.5px; }
+    .n { font-size: 13px; font-weight: 700; fill: #0b1020; }
+    .link { stroke-dasharray: 4 7; animation: dash 1.6s linear infinite; }
+    @keyframes dash { to { stroke-dashoffset: -22; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="330" fill="url(#bg)"/>
+
+    <text x="31" y="40" class="sans" font-size="13" fill="#64748b" letter-spacing="1.2">FROM TEMPLATE TO INSTALLED EXTENSION</text>
+
+    <!-- step track -->
+    <line x1="115" y1="176" x2="1085" y2="176" stroke="url(#track)" stroke-width="2" stroke-opacity="0.55"/>
+    <circle r="5" fill="#ffffff">
+      <animateMotion dur="6s" repeatCount="indefinite"><mpath href="#run"/></animateMotion>
+    </circle>
+
+    <g class="sans">
+      <g>
+        <rect class="box" x="31" y="60" width="168" height="96" rx="12"/>
+        <circle cx="57" cy="86" r="12" fill="#22d3ee"/><text class="n" x="57" y="91" text-anchor="middle">1</text>
+        <text class="t" x="77" y="92">Use template</text>
+        <text class="s mono" x="45" y="130">new GitHub repo</text>
+        <circle cx="115" cy="176" r="6" fill="#22d3ee"/>
+      </g>
+      <g>
+        <rect class="box" x="225" y="60" width="168" height="96" rx="12"/>
+        <circle cx="251" cy="86" r="12" fill="#38bdf8"/><text class="n" x="251" y="91" text-anchor="middle">2</text>
+        <text class="t" x="271" y="92">init</text>
+        <text class="s mono" x="239" y="130">rename placeholders</text>
+        <circle cx="309" cy="176" r="6" fill="#38bdf8"/>
+      </g>
+      <g>
+        <rect class="box" x="419" y="60" width="168" height="96" rx="12"/>
+        <circle cx="445" cy="86" r="12" fill="#818cf8"/><text class="n" x="445" y="91" text-anchor="middle">3</text>
+        <text class="t" x="465" y="92">Add tools</text>
+        <text class="s mono" x="433" y="130">Registry.Tool(...)</text>
+        <circle cx="503" cy="176" r="6" fill="#818cf8"/>
+      </g>
+      <g>
+        <rect class="box" x="613" y="60" width="168" height="96" rx="12"/>
+        <circle cx="639" cy="86" r="12" fill="#a78bfa"/><text class="n" x="639" y="91" text-anchor="middle">4</text>
+        <text class="t" x="659" y="92">Build &amp; test</text>
+        <text class="s mono" x="627" y="130">UBT + Automation</text>
+        <circle cx="697" cy="176" r="6" fill="#a78bfa"/>
+      </g>
+      <g>
+        <rect class="box" x="807" y="60" width="168" height="96" rx="12"/>
+        <circle cx="833" cy="86" r="12" fill="#c084fc"/><text class="n" x="833" y="91" text-anchor="middle">5</text>
+        <text class="t" x="853" y="92">Release</text>
+        <text class="s mono" x="821" y="130">v&lt;x.y.z&gt; source zip</text>
+        <circle cx="891" cy="176" r="6" fill="#c084fc"/>
+      </g>
+      <g>
+        <rect class="box" x="1001" y="60" width="168" height="96" rx="12"/>
+        <circle cx="1027" cy="86" r="12" fill="#e879f9"/><text class="n" x="1027" y="91" text-anchor="middle">6</text>
+        <text class="t" x="1047" y="92">Install</text>
+        <text class="s mono" x="1015" y="130">install-extension</text>
+        <circle cx="1085" cy="176" r="6" fill="#e879f9"/>
+      </g>
+    </g>
+
+    <!-- runtime row -->
+    <text x="31" y="230" class="sans" font-size="13" fill="#64748b" letter-spacing="1.2">IN THE EDITOR</text>
+    <g class="sans" font-size="14">
+      <rect x="120" y="262" width="304" height="44" rx="22" fill="#22d3ee" fill-opacity="0.10" stroke="#22d3ee" stroke-opacity="0.5"/>
+      <text x="272" y="289" text-anchor="middle" fill="#a5f3fc">Your plugin · IUnrealMcpToolProvider</text>
+
+      <rect x="484" y="262" width="260" height="44" rx="22" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-opacity="0.55"/>
+      <text x="614" y="289" text-anchor="middle" fill="#ddd6fe">Unreal-MCP (UnrealMCP plugin)</text>
+
+      <rect x="804" y="262" width="276" height="44" rx="22" fill="#e879f9" fill-opacity="0.10" stroke="#e879f9" stroke-opacity="0.5"/>
+      <text x="942" y="289" text-anchor="middle" fill="#f5d0fe">MCP client · AI agent calls tools</text>
+    </g>
+    <g class="mono" font-size="11" fill="#94a3b8" text-anchor="middle">
+      <text x="454" y="254">modular</text>
+      <text x="454" y="267">feature</text>
+      <text x="774" y="254">MCP</text>
+      <text x="774" y="267">tools</text>
+    </g>
+    <line class="link" x1="424" y1="284" x2="484" y2="284" stroke="#67e8f9" stroke-width="2"/>
+    <line class="link" x1="744" y1="284" x2="804" y2="284" stroke="#c4b5fd" stroke-width="2"/>
+    <circle r="4" fill="#67e8f9"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#r1"/></animateMotion></circle>
+    <circle r="4" fill="#e879f9"><animateMotion dur="1.8s" begin="0.9s" repeatCount="indefinite"><mpath href="#r2"/></animateMotion></circle>
+  </g>
+</svg>

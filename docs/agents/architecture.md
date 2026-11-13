@@ -1,8 +1,13 @@
 # Architecture — an Unreal-MCP extension
 
-## The single extension shape
+## The extension shape this template scaffolds
 
-Every Unreal-MCP extension is a **C++ `Type=Editor` UE plugin** that:
+> Unreal-MCP's recommended shape for an *editor feature* is now an **RQL module** (`IUnrealMcpRqlModule`,
+> see Unreal-MCP `samples/UnrealAITemplate` and `docs/EXTENSIONS.md`). This template scaffolds the
+> **custom tool** shape below, which stays supported for work that is not editor data. First-party
+> extensions live in Unreal-MCP `extensions/` and are released from there.
+
+A custom-tool extension is a **C++ `Type=Editor` UE plugin** that:
 
 1. **Implements `IUnrealMcpToolProvider`** and registers its tools via the fluent
    `FUnrealMcpToolRegistry` builder. The contract lives in the Unreal-MCP plugin's **runtime** module

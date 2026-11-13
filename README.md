@@ -4,7 +4,7 @@
 
 <br/>
 
-[![Template](https://img.shields.io/badge/template-use%20it-2F6F9F?style=for-the-badge&labelColor=0F172A&logoColor=white&logo=github)](https://github.com/IvanMurzak/Unreal-AI-Template/generate) [![Unreal-MCP](https://img.shields.io/badge/for-Unreal--MCP-2F6F9F?style=for-the-badge&labelColor=0F172A&logoColor=white)](https://github.com/IvanMurzak/Unreal-MCP) ![Unreal Engine](https://img.shields.io/badge/CI%20target-UE%205.7-0E7490?style=for-the-badge&labelColor=0F172A&logoColor=white&logo=unrealengine) [![License](https://img.shields.io/badge/license-Apache--2.0-047857?style=for-the-badge&labelColor=0F172A&logoColor=white)](LICENSE) <a href="https://stand-with-ukraine.pp.ua"><img src="https://raw.githubusercontent.com/IvanMurzak/IvanMurzak/main/images/ukraine/flag-square.svg" height="28" alt="Stand with Ukraine" title="Stand with Ukraine"></a>
+[![Template](https://img.shields.io/badge/template-use%20it-2F6F9F?style=for-the-badge&labelColor=0F172A&logoColor=white&logo=github)](https://github.com/IvanMurzak/Unreal-AI-Template/generate) [![Unreal-MCP](https://img.shields.io/badge/for-Unreal--MCP-2F6F9F?style=for-the-badge&labelColor=0F172A&logoColor=white)](https://github.com/IvanMurzak/Unreal-MCP) ![Unreal Engine](https://img.shields.io/badge/CI%20target-UE%205.7-0E7490?style=for-the-badge&labelColor=0F172A&logoColor=white&logo=unrealengine) [![License](https://img.shields.io/badge/license-Apache--2.0-047857?style=for-the-badge&labelColor=0F172A&logoColor=white)](LICENSE) [![Stand with Ukraine](https://raw.githubusercontent.com/IvanMurzak/IvanMurzak/main/images/ukraine/flag-badge.svg)](https://stand-with-ukraine.pp.ua)
 
 </div>
 

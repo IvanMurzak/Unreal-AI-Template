@@ -4,10 +4,10 @@
 
 <br/>
 
-[![Use this template](https://img.shields.io/badge/GitHub-use%20this%20template-22d3ee?style=flat-square)](https://github.com/IvanMurzak/Unreal-AI-Template/generate)
-[![Unreal-MCP](https://img.shields.io/badge/for-Unreal--MCP-8b5cf6?style=flat-square)](https://github.com/IvanMurzak/Unreal-MCP)
-![CI target](https://img.shields.io/badge/CI%20target-UE%205.7-a5b4fc?style=flat-square)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-e879f9?style=flat-square)](LICENSE)
+[![Template](https://img.shields.io/badge/template-use%20it-4338CA?style=for-the-badge&labelColor=0F172A&logoColor=white&logo=github)](https://github.com/IvanMurzak/Unreal-AI-Template/generate)
+[![Unreal-MCP](https://img.shields.io/badge/for-Unreal--MCP-4338CA?style=for-the-badge&labelColor=0F172A&logoColor=white)](https://github.com/IvanMurzak/Unreal-MCP)
+![Unreal Engine](https://img.shields.io/badge/CI%20target-UE%205.7-0E7490?style=for-the-badge&labelColor=0F172A&logoColor=white&logo=unrealengine)
+[![License](https://img.shields.io/badge/license-Apache--2.0-047857?style=for-the-badge&labelColor=0F172A&logoColor=white)](LICENSE)
 
 </div>
 
@@ -33,14 +33,12 @@ spec, an end-to-end tool check, setup and version scripts, and CI that publishes
 
 ## What you get
 
-| Path | What it is |
-| --- | --- |
-| `YOUR_EXTENSION_MODULE/` | The UE plugin (renamed by `init`): `.uplugin` depends on `UnrealMCP`; `Private/<Module>Module.cpp` holds the provider, one sample tool and the module that registers it |
-| `…/Private/Tests/` | UE Automation spec, one `It(...)` per tool |
-| `Tests/e2e/` | `Run-ToolChecks.ps1` and one `tools/<tool>.e2e.ps1` check per tool (calls `unreal-mcp-cli run-tool`) |
-| `commands/` | `init` (PowerShell and Python), `bump-version`, `get-version`, `update-core` |
-| `extension.json` | Catalog manifest: `extensionId`, `pluginName`, `repo`, `version`, `minCoreVersion`, `enginePlugins`, `tools` |
-| `.github/workflows/` | Build and test, version-gated release, version bump; `*.yml-sample` files go live on `init` |
+- ✅ **Editor plugin** — `.uplugin` + C++ module with a tool provider and one sample tool
+- ✅ **Automation spec** — one `It(...)` per tool under `Private/Tests/`
+- ✅ **E2E checks** — `Tests/e2e/`, one `unreal-mcp-cli run-tool` check per tool
+- ✅ **Scripts** — `init` (PowerShell, Python), `bump-version`, `get-version`, `update-core`
+- ✅ **Catalog manifest** — `extension.json` with id, version, `minCoreVersion`, tools
+- ✅ **CI** — build and test, version-gated source-zip release, version bump
 
 ## Quick start
 

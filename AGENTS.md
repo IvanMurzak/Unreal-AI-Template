@@ -48,7 +48,7 @@ extension (what it wraps, its gating plugin, its tool family); it is no longer t
 ## Build / test (local loop)
 
 Junction the plugin into a UE project that has the UnrealMCP core plugin available, build with UBT
-(`README.md` step 4), and run the Automation specs with filter = the module name. CI does the same on a
+(`README.md` Quick start, step 3), and run the Automation specs with filter = the module name. CI does the same on a
 self-hosted runner.
 
 ## Conventions

@@ -37,7 +37,7 @@ def hero():
     return K.hero(
         title="Unreal AI ", accent="Template", eyebrow_text="Unreal-MCP extension template",
         subtitle=["Scaffold a C++ editor plugin that", "adds MCP tools for AI agents."],
-        chip_items=["Type=Editor", "C++ / UBT", "source zip"], right=code_card(),
+        chip_items=["Type=Editor", "C++ / UBT", "source zip"], right=code_card(), accent_fx="flow",
         label="Unreal AI Template: scaffold a C++ editor plugin that adds MCP tools to AI Game Developer (Unreal-MCP)")
 
 

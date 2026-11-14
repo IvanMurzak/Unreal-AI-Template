@@ -2,7 +2,7 @@
 
 ## The extension shape this template scaffolds
 
-> Unreal-MCP's recommended shape for an *editor feature* is now an **RQL module** (`IUnrealMcpRqlModule`,
+> Unreal-MCP's recommended shape for an *editor feature* is an **RQL module** (`IUnrealMcpRqlModule`,
 > see Unreal-MCP `samples/UnrealAITemplate` and `docs/EXTENSIONS.md`). This template scaffolds the
 > **custom tool** shape below, which stays supported for work that is not editor data. First-party
 > extensions live in Unreal-MCP `extensions/` and are released from there.

@@ -37,8 +37,9 @@ release**; a stranded asset can't produce a partial release. This mirrors Unity'
 
 A **single source zip `<Module>-<version>.zip`** (the plugin source folder, `<Module>/<Module>.uplugin`
 at the archive root), built with `git archive` so only tracked files ship (no `Binaries/`/`Intermediate/`).
-This is the archive `unreal-mcp-cli install-extension` unpacks into a consumer project's `Plugins/<Module>/`
-(by id only for extensions listed in the Unreal-MCP extension index, otherwise with `--source <plugin-dir>`); **UE then compiles the extension on the next editor open** (the source-ship model,
+Users unpack it and install the plugin folder with `unreal-mcp-cli install-extension <id> <project> --source <plugin-dir>`,
+which copies it into the project's `Plugins/<Module>/` (install by id alone works only for extensions listed in the
+Unreal-MCP extension index); **UE then compiles the extension on the next editor open** (the source-ship model,
 design note §5).
 
 > **Why source, not `BuildPlugin` binaries?** An extension depends on the `UnrealMCP` plugin, and a

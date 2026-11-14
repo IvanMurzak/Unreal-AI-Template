@@ -11,7 +11,7 @@
 **Unreal AI Template** is a GitHub template repository for third-party extensions of [AI Game Developer (Unreal-MCP)](https://github.com/IvanMurzak/Unreal-MCP). It gives you a buildable C++ `Type=Editor` plugin that implements `IUnrealMcpToolProvider` with one sample tool, an Automation spec, an end-to-end tool check, setup and version scripts, and CI that publishes a source-zip release.
 
 > [!IMPORTANT]
-> **Which extension shape do you need?** Unreal-MCP now exposes editor data to agents through **RQL** (`rql-query` / `rql-mutate` / `rql-schema`). For a new *editor feature* (Niagara, PCG, …) the recommended shape is an **RQL module** (`IUnrealMcpRqlModule`): start from [`samples/UnrealAITemplate`](https://github.com/IvanMurzak/Unreal-MCP/tree/main/samples/UnrealAITemplate) in Unreal-MCP and its [extension guide](https://github.com/IvanMurzak/Unreal-MCP/blob/main/docs/EXTENSIONS.md). This repository scaffolds the **custom tool** shape (`IUnrealMcpToolProvider`), which stays supported for work that is not editor data. The first-party extensions live inside Unreal-MCP ([`extensions/`](https://github.com/IvanMurzak/Unreal-MCP/tree/main/extensions)) and are not built from this template.
+> **Which extension shape do you need?** Unreal-MCP exposes editor data to agents through **RQL** (`rql-query` / `rql-mutate` / `rql-schema`). For a new *editor feature* (Niagara, PCG, …) the recommended shape is an **RQL module** (`IUnrealMcpRqlModule`): start from [`samples/UnrealAITemplate`](https://github.com/IvanMurzak/Unreal-MCP/tree/main/samples/UnrealAITemplate) in Unreal-MCP and its [extension guide](https://github.com/IvanMurzak/Unreal-MCP/blob/main/docs/EXTENSIONS.md). This repository scaffolds the **custom tool** shape (`IUnrealMcpToolProvider`), which stays supported for work that is not editor data. The first-party extensions live inside Unreal-MCP ([`extensions/`](https://github.com/IvanMurzak/Unreal-MCP/tree/main/extensions)) and are not built from this template.
 
 <p align="center">
   <img src="docs/assets/flow.svg" alt="Six steps: use the template, run init, add tools, build and test, release a source zip, install with unreal-mcp-cli. In the editor Unreal-MCP finds the plugin's tool provider and serves its tools to the AI agent." width="100%"/>
@@ -42,7 +42,7 @@ python commands/init.py --module UnrealAINiagara --id com.company.unreal-ai-niag
   --name "Unreal AI Niagara" --repo YourName/Unreal-AI-Niagara --feature Niagara
 ```
 
-`init` replaces the `YOUR_*` placeholders in file contents and names, adds the optional gating engine plugin (`-FeaturePlugin` / `--feature`) to the `.uplugin`, uncomments its module dependencies in `*.Build.cs`, and renames `*.yml-sample` workflows to `*.yml`. The sample tool id defaults to `hello-extension` (`-ToolId` / `--tool`).
+`init` replaces the `YOUR_*` placeholders in file contents and names, adds the optional gating engine plugin (`-FeaturePlugin` / `--feature`) to the `.uplugin`, uncomments its module dependencies in `*.Build.cs`, and renames `*.yml-sample` workflows to `*.yml`. The sample tool id defaults to `hello-extension` (`-ToolId` / `--tool`). Then rewrite this README for your extension: it describes the template.
 
 **3. Build against a UE project** that also has the `UnrealMCP` plugin in `Plugins/`:
 
@@ -55,7 +55,8 @@ cmd /c mklink /J "<UEProject>\Plugins\UnrealAINiagara" "<thisRepo>\UnrealAINiaga
 Run the Automation specs:
 
 ```powershell
-UnrealEditor-Cmd.exe "<UEProject>.uproject" -nullrhi -unattended `
+& "C:\Program Files\Epic Games\UE_5.7\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" `
+  "<UEProject>\<UEProject>.uproject" -nullrhi -unattended `
   -ExecCmds="Automation RunTests UnrealAINiagara; Quit"
 ```
 
@@ -91,18 +92,18 @@ The `.uplugin` `VersionName` is the single version source. Bump it with the scri
 
 `release.yml` publishes only when the version has no `v<version>` tag yet: it runs the tests, packages the plugin source as `<Module>-<version>.zip` and creates the GitHub Release and tag in one step. Users compile the source on their next editor open.
 
-Install into a UE project with the Unreal-MCP CLI:
+Users download the release zip, unpack it, and install the plugin folder into a UE project with the Unreal-MCP CLI:
 
 ```bash
 # add --build to compile now (Windows only)
 unreal-mcp-cli install-extension <extensionId> <UEProject> --source <path-to-plugin-dir>
 ```
 
-Install by id alone (without `--source`) works only for extensions listed in the Unreal-MCP extension index. See [installing an extension](https://github.com/IvanMurzak/Unreal-MCP/blob/main/docs/EXTENSIONS.md#installing-an-extension-into-a-project).
+Install by id alone (`unreal-mcp-cli install-extension <extensionId> <UEProject>`, without `--source`) works only for extensions listed in the Unreal-MCP extension index. See [installing an extension](https://github.com/IvanMurzak/Unreal-MCP/blob/main/docs/EXTENSIONS.md#installing-an-extension-into-a-project).
 
 ## CI
 
-The UE jobs need a self-hosted Windows runner labelled `unreal-<ue>` (for example `unreal-5-7`) and stay skipped until you set the repository variables `UNREAL_RUNNER_READY`, `UNREAL_E2E_READY` and `UNREAL_HOST_PROJECT`. Fork pull requests never run on that runner. Details: [docs/agents/ci.md](docs/agents/ci.md).
+The UE jobs need a self-hosted Windows runner labelled `unreal-<ue>` (for example `unreal-5-7`) and stay skipped until you set the repository variables `UNREAL_RUNNER_READY` (build and Automation specs) and `UNREAL_E2E_READY` (E2E). Set `UNREAL_HOST_PROJECT` (the host `.uproject`) before you turn either on. Fork pull requests never run on that runner. Details: [docs/agents/ci.md](docs/agents/ci.md).
 
 ## Docs
 

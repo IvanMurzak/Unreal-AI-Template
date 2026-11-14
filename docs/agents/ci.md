@@ -57,8 +57,8 @@ fork PR's checked-out code must not execute on your machine.
 
 ## The multi-UE-version matrix
 
-The target matrix is `5.7 / 5.8` (today only `5.7` runs; `TODO(5.8)` in `test_pull_request.yml-sample` and
-`release.yml-sample` explains why). It validates the extension on each supported engine (the
+CI runs `5.7`; `TODO(5.8)` in `test_pull_request.yml-sample` and `release.yml-sample` explains why `5.8`
+is not in the matrix. It validates the extension on each supported engine (the
 `test_unreal_plugin.yml` legs). The **release ships ONE source zip** (not a
 per-UE binary): the extension ships as source and UE compiles it on the consumer's editor open, so a
 single source asset serves every UE version (the compile-on-install decision, design note §5).

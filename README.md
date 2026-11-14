@@ -98,7 +98,7 @@ Install into a UE project with the Unreal-MCP CLI:
 unreal-mcp-cli install-extension <extensionId> <UEProject> --source <path-to-plugin-dir>
 ```
 
-Install by id alone (without `--source`) works only for extensions listed in the Unreal-MCP extension index, which today contains the first-party extensions. See [installing an extension](https://github.com/IvanMurzak/Unreal-MCP/blob/main/docs/EXTENSIONS.md#installing-an-extension-into-a-project).
+Install by id alone (without `--source`) works only for extensions listed in the Unreal-MCP extension index. See [installing an extension](https://github.com/IvanMurzak/Unreal-MCP/blob/main/docs/EXTENSIONS.md#installing-an-extension-into-a-project).
 
 ## CI
 

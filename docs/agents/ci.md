@@ -9,7 +9,7 @@ release, and a manual bump workflow.
 | File | Trigger | Purpose |
 | --- | --- | --- |
 | `test_unreal_plugin.yml` | `workflow_call` / dispatch | Build the plugin via UBT against the host project + run UE Automation specs for ONE UE version; parse the exported `index.json` (authoritative, not the editor exit code). |
-| `test_pull_request.yml` | PR | Calls the reusable test for **UE 5.7** (5.8 is scoped out for now, see the `TODO(5.8)` in the file) + an **E2E** job: `unreal-mcp-cli install-extension` → headless boot → `run-tool` per tool (`Tests/e2e`). |
+| `test_pull_request.yml` | PR | Calls the reusable test per UE version (see [the matrix](#the-multi-ue-version-matrix)) + an **E2E** job: `unreal-mcp-cli install-extension` → headless boot → `run-tool` per tool (`Tests/e2e`). |
 | `release.yml` | push to `main` | **Version-gated** on the `.uplugin` `VersionName` bump + tag (`v<version>`)-not-exists → full tests → package the **source zip** `<Module>-<version>.zip` → **atomic** GitHub Release. |
 | `bump_version.yml` | manual | Runs `commands/bump-version.ps1`; mode `pr` (default) pushes `release/<v>` and opens a PR, mode `direct` commits to the default branch and dispatches `release.yml`. |
 

@@ -10,15 +10,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import svgkit as K  # noqa: E402
 
-M = K.MONO
+STR = "#F5D08A"  # string literals, as in the kit's terminal
+CHAR_W = 10.2   # mono glyph width at font-size 17
+LINE_H = 34
 
 
 def code_card():
     x, y, w, h = 760, 70, 420, 240
     lines = [
-        [(K.TEXT, "Registry."), (K.BLUE, "Tool"), (K.TEXT, '(TEXT('), ("#F5D08A", '"my-tool"'), (K.TEXT, "))")],
-        [(K.TEXT, "  ."), (K.BLUE, "Title"), (K.TEXT, "(TEXT("), ("#F5D08A", '"My Tool"'), (K.TEXT, "))")],
-        [(K.TEXT, "  ."), (K.BLUE, "ParamString"), (K.TEXT, "(TEXT("), ("#F5D08A", '"name"'), (K.TEXT, "), …)")],
+        [(K.TEXT, "Registry."), (K.BLUE, "Tool"), (K.TEXT, '(TEXT('), (STR, '"my-tool"'), (K.TEXT, "))")],
+        [(K.TEXT, "  ."), (K.BLUE, "Title"), (K.TEXT, "(TEXT("), (STR, '"My Tool"'), (K.TEXT, "))")],
+        [(K.TEXT, "  ."), (K.BLUE, "ParamString"), (K.TEXT, "(TEXT("), (STR, '"name"'), (K.TEXT, "), …)")],
         [(K.TEXT, "  ."), (K.BLUE, "Handle"), (K.TEXT, "(OnCall);")],
         [(K.MUTED, "// runs on the game thread")],
     ]
@@ -28,8 +30,9 @@ def code_card():
            K.logo(x + w - 40, y + 34, 40)]
     for i, spans in enumerate(lines):
         t = "".join(f'<tspan fill="{c}">{K.esc(s)}</tspan>' for c, s in spans)
-        out.append(f'<text x="{x + 24}" y="{y + 84 + i * 34}" class="m" font-size="17">{t}</text>')
-    out.append(f'<rect class="blink" x="{x + 24 + 26 * 10.2 + 6}" y="{y + 84 + 4 * 34 - 16}" width="10" height="20" fill="{K.TEXT}"/>')
+        out.append(f'<text x="{x + 24}" y="{y + 84 + i * LINE_H}" class="m" font-size="17">{t}</text>')
+    last = sum(len(s) for _, s in lines[-1])
+    out.append(f'<rect class="blink" x="{x + 24 + last * CHAR_W + 6}" y="{y + 84 + (len(lines) - 1) * LINE_H - 16}" width="10" height="20" fill="{K.TEXT}"/>')
     return "".join(out)
 
 

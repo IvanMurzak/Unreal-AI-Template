@@ -14,7 +14,7 @@
 > **Which extension shape do you need?** Unreal-MCP now exposes editor data to agents through **RQL** (`rql-query` / `rql-mutate` / `rql-schema`). For a new *editor feature* (Niagara, PCG, …) the recommended shape is an **RQL module** (`IUnrealMcpRqlModule`): start from [`samples/UnrealAITemplate`](https://github.com/IvanMurzak/Unreal-MCP/tree/main/samples/UnrealAITemplate) in Unreal-MCP and its [extension guide](https://github.com/IvanMurzak/Unreal-MCP/blob/main/docs/EXTENSIONS.md). This repository scaffolds the **custom tool** shape (`IUnrealMcpToolProvider`), which stays supported for work that is not editor data. The first-party extensions live inside Unreal-MCP ([`extensions/`](https://github.com/IvanMurzak/Unreal-MCP/tree/main/extensions)) and are not built from this template.
 
 <p align="center">
-  <img src="docs/assets/flow.svg" alt="Six steps: use the template, run init, add tools, build and test with UBT, release a source zip, install with unreal-mcp-cli. In the editor, Unreal-MCP finds the plugin's tool provider and serves its tools to the AI agent." width="100%"/>
+  <img src="docs/assets/flow.svg" alt="Six steps: use the template, run init, add tools, build and test, release a source zip, install with unreal-mcp-cli. In the editor Unreal-MCP finds the plugin's tool provider and serves its tools to the AI agent." width="100%"/>
 </p>
 
 ## What you get
